@@ -1,2 +1,42 @@
 /install*/
 /fitImage.its
+
+# Buildroot / Linux image generated files
+/output/
+/build/
+/images/
+/dl/
+/host/
+/target/
+/rootfs/
+/.config
+/.config.old
+/local.mk
+/buildroot/output/
+/buildroot/dl/
+/buildroot/.config
+
+# Generated boot and SD-card images
+*.img
+*.wic
+*.sdcard
+*.iso
+*.tar
+*.tar.gz
+*.cpio
+*.cpio.gz
+*.dtb
+*.itb
+fitImage
+Image
+u-boot*
+fw_payload*
+
+# Logs and temporary files
+*.log
+*.tmp
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
