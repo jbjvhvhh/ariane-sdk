@@ -34,6 +34,22 @@ This builds a RISC-V toolchain, OpenSBI, u-boot including a corresponding device
 By default, the final image is generated at `install<XLEN>_<BOARD>/sdcard.img`.
 To change the location, set the `OUTPUT` variable in the `make` command like `make OUTPUT=build`.
 
+### PZ-VU13P-KFB
+
+The PZ-VU13P port is 64-bit only and must be used with the matching
+`BOARD=pz_vu13p` CVA6 FPGA bitstream:
+
+```console
+$ git submodule sync --recursive
+$ git submodule update --init --recursive
+$ make XLEN=64 BOARD=pz_vu13p
+```
+
+The resulting SD-card image is
+`install64_pz_vu13p/sdcard.img`. Board-specific hardware mappings and
+bring-up checks are documented in
+[`configs/pz_vu13p/README.md`](configs/pz_vu13p/README.md).
+
 ## Flash to SD card
 
 Assuming `XLEN=64` and `BOARD=genesys2`.
