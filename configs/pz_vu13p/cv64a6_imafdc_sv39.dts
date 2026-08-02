@@ -129,8 +129,8 @@
       // Locally administered address; assign a unique value when using multiple boards.
       local-mac-address = [02 18 3e 13 00 01];
       reg = <0x0 0x30000000 0x0 0x8000>;
-      // The vendor reference enables RX delay and leaves TX delay disabled.
-      phy-mode = "rgmii-rxid";
+      // Match the vendor design: PHY TX delay enabled, PHY RX delay disabled.
+      phy-mode = "rgmii-txid";
       phy-handle = <&phy0>;
 
       mdio {

@@ -427,7 +427,7 @@ index 000000000..c0c0dab68
 +		return -ENODEV;
 +	}
 +
-+	phy_connect_direct(ndev, phydev, lowrisc_phy_adjust_link, PHY_INTERFACE_MODE_RGMII_RXID);
++	phy_connect_direct(ndev, phydev, lowrisc_phy_adjust_link, PHY_INTERFACE_MODE_RGMII_TXID);
 +	
 +	if (IS_ERR(phydev)) {
 +		netdev_err(ndev, "Could not attach to PHY\n");

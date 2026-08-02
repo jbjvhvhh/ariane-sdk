@@ -11,8 +11,9 @@
 - SD 卡：Xilinx SPI 控制器，地址 `0x20000000`。
 - Ethernet MAC：lowRISC Ethernet，地址 `0x30000000`。
 - Ethernet PHY：Realtek RTL8211FI，MDIO 地址 `1`。
-- RGMII：`rgmii-rxid`，与厂家工程的 `tx_delay_en=0`、
-  `rx_delay_en=1` 设置一致。
+- RGMII：`rgmii-txid`。厂家验证工程实际设置 `tx_delay_en=1`、
+  `rx_delay_en=0`；Linux RTL8211F PHY 驱动会据此开启 TX 内部延时并
+  关闭 RX 内部延时，避免与 FPGA 接收时钟路径重复增加 RX 延时。
 - GPIO：Xilinx GPIO，地址 `0x40000000`。
 
 该配置只支持当前 PZ-VU13P 的 64 位 CVA6 设计，没有提供 32 位配置。
