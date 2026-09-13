@@ -1,0 +1,140 @@
+From: CVA6 board support
+Subject: [PATCH] riscv: account for both PZ-VU13P DDR banks and keep boot buffers low
+
+This patch is scoped to patches/pz_vu13p. Preserve the old low-memory
+boot allocations while exposing both contiguous 8 GiB banks to Linux.
+The default generic DRAM init only counts the first reg tuple.
+
+diff --git a/arch/riscv/cpu/generic/dram.c b/arch/riscv/cpu/generic/dram.c
+--- a/arch/riscv/cpu/generic/dram.c
++++ b/arch/riscv/cpu/generic/dram.c
+@@ -1,21 +1,44 @@
+-// SPDX-License-Identifier: GPL-2.0+
+-/*
+- * Copyright (C) 2018, Bin Meng <bmeng.cn@gmail.com>
+- */
+-
+-#include <fdtdec.h>
+-#include <init.h>
+-#include <asm/global_data.h>
+-#include <linux/sizes.h>
+-
+-DECLARE_GLOBAL_DATA_PTR;
+-
+-int dram_init(void)
+-{
+-	return fdtdec_setup_mem_size_base();
+-}
+-
+-int dram_init_banksize(void)
+-{
+-	return fdtdec_setup_memory_banksize();
+-}
++// SPDX-License-Identifier: GPL-2.0+
++/*
++ * Copyright (C) 2018, Bin Meng <bmeng.cn@gmail.com>
++ */
++
++#include <fdtdec.h>
++#include <init.h>
++#include <asm/global_data.h>
++#include <linux/sizes.h>
++#include <linux/errno.h>
++#include <linux/ioport.h>
++#include <dm/ofnode.h>
++
++DECLARE_GLOBAL_DATA_PTR;
++
++int dram_init(void)
++{
++	struct resource res;
++	phys_size_t size = 0;
++	ofnode mem;
++	int bank, ret;
++
++	ret = fdtdec_setup_mem_size_base();
++	if (ret)
++		return ret;
++
++	/* PZ-VU13P: two adjacent 8 GiB windows in one memory node. */
++	mem = ofnode_path("/memory");
++	for (bank = 0; bank < CONFIG_NR_DRAM_BANKS; bank++) {
++		ret = ofnode_read_resource(mem, bank, &res);
++		if (ret)
++			return ret;
++		if (res.start != gd->ram_base + size)
++			return -EINVAL;
++		size += res.end - res.start + 1;
++	}
++	gd->ram_size = size;
++	return 0;
++}
++
++int dram_init_banksize(void)
++{
++	return fdtdec_setup_memory_banksize();
++}
+diff --git a/board/openhwgroup/cva6_genesysII/cva6.c b/board/openhwgroup/cva6_genesysII/cva6.c
+--- a/board/openhwgroup/cva6_genesysII/cva6.c
++++ b/board/openhwgroup/cva6_genesysII/cva6.c
+@@ -1,9 +1,24 @@
+-#include <init.h>
+-
+-int board_init(void) {
+-  return 0;
+-}
+-
+-int ft_board_setup(void *fdt, struct bd_info *bd) {
+-  return 0;
+-}
++#include <init.h>
++#include <asm/global_data.h>
++#include <linux/sizes.h>
++
++DECLARE_GLOBAL_DATA_PTR;
++
++/* Keep boot-time relocation in DDR0's original low 1 GiB window.
++ * This does not reduce the two memory banks passed to Linux.
++ */
++phys_addr_t board_get_usable_ram_top(phys_size_t total_size)
++{
++  phys_addr_t limit = gd->ram_base + SZ_1G;
++
++  (void)total_size;
++  return gd->ram_top < limit ? gd->ram_top : limit;
++}
++
++int board_init(void) {
++  return 0;
++}
++
++int ft_board_setup(void *fdt, struct bd_info *bd) {
++  return 0;
++}
+diff --git a/include/configs/openhwgroup_cva6_genesysII.h b/include/configs/openhwgroup_cva6_genesysII.h
+--- a/include/configs/openhwgroup_cva6_genesysII.h
++++ b/include/configs/openhwgroup_cva6_genesysII.h
+@@ -1,8 +1,15 @@
+-#ifndef __CONFIG_H
+-#define __CONFIG_H
+-
+-#include <linux/sizes.h>
+-
+-#define CFG_SYS_SDRAM_BASE 0x80000000
+-
+-#endif
++#ifndef __CONFIG_H
++#define __CONFIG_H
++
++#include <linux/sizes.h>
++
++#define CFG_SYS_SDRAM_BASE 0x80000000
++
++/* Limit bootm scratch allocations, not the Linux memory map. */
++#define CFG_EXTRA_ENV_SETTINGS \
++	"bootm_low=0x80000000\0" \
++	"bootm_size=0x40000000\0" \
++	"fdt_high=0xbfffffff\0" \
++	"initrd_high=0xbfffffff\0"
++
++#endif

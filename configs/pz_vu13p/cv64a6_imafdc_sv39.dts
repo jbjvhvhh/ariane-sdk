@@ -9,6 +9,11 @@
     stdout-path = "/soc/uart@10000000:115200";
     //tick-timer =  "/cpus/cpu@0";
   };
+  soc_clk: clock-50000000 {
+    compatible = "fixed-clock";
+    #clock-cells = <0>;
+    clock-frequency = <50000000>;
+  };
   cpus {
     #address-cells = <1>;
     #size-cells = <0>;
@@ -36,7 +41,9 @@
   };
   memory@80000000 {
     device_type = "memory";
-    reg = <0x0 0x80000000 0x0 0x40000000>;
+    // DDR0: 8 GiB at 0x80000000; DDR1: 8 GiB at 0x280000000.
+    reg = <0x0 0x80000000 0x2 0x0>,
+          <0x2 0x80000000 0x2 0x0>;
   };
   leds {
     compatible = "gpio-leds";
@@ -44,6 +51,35 @@
       gpios = <&xlnx_gpio 1 0>;
       linux,default-trigger = "heartbeat";
       retain-state-suspended;
+    };
+  };
+  keys {
+    compatible = "gpio-keys-polled";
+    poll-interval = <50>;
+
+    key0 {
+      label = "key0";
+      gpios = <&xlnx_gpio 8 1>;
+      linux,code = <2>;
+      debounce-interval = <20>;
+    };
+    key1 {
+      label = "key1";
+      gpios = <&xlnx_gpio 9 1>;
+      linux,code = <3>;
+      debounce-interval = <20>;
+    };
+    key2 {
+      label = "key2";
+      gpios = <&xlnx_gpio 10 1>;
+      linux,code = <4>;
+      debounce-interval = <20>;
+    };
+    key3 {
+      label = "key3";
+      gpios = <&xlnx_gpio 11 1>;
+      linux,code = <5>;
+      debounce-interval = <20>;
     };
   };
   L26: soc {
@@ -158,6 +194,26 @@
       xlnx,is-dual = <0x1>;
       xlnx,tri-default = <0xffffffff>;
       xlnx,tri-default-2 = <0xffffffff>;
+    };
+    iic0: i2c@50000000 {
+      compatible = "xlnx,axi-iic-2.1";
+      #address-cells = <1>;
+      #size-cells = <0>;
+      reg = <0x0 0x50000000 0x0 0x1000>;
+      interrupt-parent = <&PLIC0>;
+      interrupts = <8>;
+      clocks = <&soc_clk>;
+      clock-frequency = <100000>;
+    };
+    iic1: i2c@50010000 {
+      compatible = "xlnx,axi-iic-2.1";
+      #address-cells = <1>;
+      #size-cells = <0>;
+      reg = <0x0 0x50010000 0x0 0x1000>;
+      interrupt-parent = <&PLIC0>;
+      interrupts = <9>;
+      clocks = <&soc_clk>;
+      clock-frequency = <100000>;
     };
   };
 };
